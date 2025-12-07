@@ -1,0 +1,66 @@
+NumPy - all array operations, matrix construction, numerical calculations
+
+Building the Hamiltonian matrix
+Vectorized spectral generation (fast - no loops)
+Strain field calculations
+
+SciPy - specialized numerical algorithms
+
+scipy.linalg.eigh: Eigenvalue decomposition of Hermitian matrices (optimized for symmetric matrices, faster than generic eigensolvers)
+scipy.signal.find_peaks: Could be used for peak detection (though I generate spectra directly)
+Linear algebra utilities
+
+Matplotlib - visualization
+
+All 12 panels in the comprehensive plot
+3D surface plots for waterfall visualization
+Extensive customization (colormaps, labels, layouts)
+
+Why these choices:
+These are the standard scientific Python stack - widely used, well-documented, and performant. The eigenvalue decomposition is the computational bottleneck, but scipy.linalg.eigh uses LAPACK under the hood, so it's essentially C/Fortran performance. For a 3×3 matrix, it's nearly instantaneous.
+
+Object-Oriented Design (this is important)
+
+1. MaterialProperties dataclass
+
+Encapsulates: thickness, Young's modulus, Poisson ratio, density
+Why separate: You can define multiple materials and compare them
+Benefit: Change one line to test a different polymer
+
+2. IRBandProperties dataclass
+
+Encapsulates: center frequency, intensity, linewidth, mechanochromic coefficients, transition dipole moment
+Why separate: Each vibrational mode is an independent entity
+Benefit: Add a fourth mode? Just append another IRBandProperties object
+
+3. CouplingParameters dataclass
+
+Encapsulates: which modes couple, coupling strength, coupling type, stress modulation
+Why separate: Coupling is a relationship between modes, not a property of modes
+Benefit: Turn off TDC? Just delete that coupling parameter. Test weak vs strong coupling? Change one number.
+
+4. TensileTester class
+
+Handles: Strain application, stress calculation, local strain fields
+Why separate: Mechanical testing is independent of spectroscopy
+Benefit: Could swap in non-linear mechanics, viscoelasticity, or plasticity without touching spectroscopy code
+
+5. CoupledVibrationalSystem class
+
+Handles: Hamiltonian construction, diagonalization, intensity calculations, coupling physics
+This is the quantum mechanics engine
+Why separate: All the coupling logic is isolated here
+Benefit: Want to add anharmonic terms? Modify only this class.
+
+6. TransientIRSpectroscopy class
+
+Handles: Spectrum generation, lineshapes (Voigt profiles), baseline/noise
+Why separate: Spectroscopy concerns (lineshapes, resolution) are independent of coupling
+Benefit: Swap Voigt for Gaussian? Change noise level? All contained here.
+
+7. TandemTensileIRExperiment class
+
+Orchestrates everything: combines mechanical testing, coupling system, and spectroscopy
+Runs the experiment loop
+Generates all visualizations
+Why separate: High-level experiment control doesn't clutter the physics classes
